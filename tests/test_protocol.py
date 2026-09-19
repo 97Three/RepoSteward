@@ -7,15 +7,15 @@ import unittest
 from dataclasses import asdict
 from pathlib import Path
 
-from reposteward.config import RepositoryPolicy
-from reposteward.context import (
+from reposteward.context.pack import (
     build_context_pack,
     failed_checkpoint,
     portable_bundle,
     ready_checkpoint,
     running_checkpoint,
 )
-from reposteward.models import (
+from reposteward.core.config import RepositoryPolicy
+from reposteward.core.models import (
     AgentDecision,
     AgentResult,
     Candidate,
@@ -24,7 +24,7 @@ from reposteward.models import (
     RepositoryInfo,
     VerificationResult,
 )
-from reposteward.protocol import (
+from reposteward.core.protocol import (
     ProtocolValidationError,
     read_context_bundle,
     schema_document,
@@ -32,7 +32,7 @@ from reposteward.protocol import (
     validate_context_bundle,
     validate_context_pack,
 )
-from reposteward.store import Store
+from reposteward.storage.store import Store
 
 
 def _candidate() -> Candidate:
