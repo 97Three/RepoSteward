@@ -26,7 +26,7 @@ application services and persistent state.
 
 ## Quick start
 
-Try a code guide with **Python 3.12+, uv, Git** and an existing local repository.
+Build from source with **Python 3.12+, uv, Git, Node 22.12+ and npm**, then try a code guide on an existing local repository.
 You can do this before configuring a GitHub identity, Docker or an agent.
 
 ```bash
@@ -125,7 +125,7 @@ They share RepoSteward's task and evidence services, with different scopes.
 | Skills | Guidance for reading code, resuming tasks, verifying changes and following PRs | Four skills exported in the Codex plugin; names below |
 | Plugin | Workspace-bound skills plus an MCP connection | Local Codex export, diagnostics and installation preview; [plugin guide](docs/agent-plugin.zh-CN.md) |
 | Instruction files | Reviewed additions to AGENTS.md, CLAUDE.md and Copilot instructions | `integration plan/apply/revert`; preserves existing instructions |
-| HTTP workbench / OpenAPI | Browser views of projects, tasks and evidence | Local read-only HTTP is implemented; FastAPI/React and its OpenAPI contract await [PR #132](https://github.com/tiammomo/RepoSteward/pull/132) |
+| HTTP workbench / OpenAPI | Browser views of projects, tasks and evidence | Implemented with FastAPI, React and a typed OpenAPI contract; [workbench guide](docs/local-workbench.zh-CN.md) |
 | Durable asynchronous operations | Operation IDs, progress, cancellation requests and recovery | Pending delivery in [Issue #165](https://github.com/tiammomo/RepoSteward/issues/165); current MCP does not implement durable Tasks |
 | A2A | Delegate scoped project-understanding reports to another agent endpoint | Pending delivery in [Issue #166](https://github.com/tiammomo/RepoSteward/issues/166); not enabled in the current mainline |
 
@@ -204,9 +204,9 @@ reposteward web
 - **Each plugin instance binds one workspace.** Use distinct names such as `reposteward-project-a` for additional projects; changing Codex's directory does not switch the binding.
 - **Refresh GitHub facts explicitly.** `overview refresh` fetches and caches facts with timestamps and error states. `overview show` and the current web view read local records.
 
-The current workbench is a local, read-only view of cross-project work, code guides,
-task continuity and review evidence. The FastAPI/React workbench and importing projects
-by pasting a URL into the web interface remain follow-up work.
+The FastAPI/React workbench provides local, read-only views of cross-project work, code guides,
+task continuity and review evidence. Installed wheels bundle the frontend and do not require Node.
+Importing projects by pasting a URL into the web interface remains follow-up work.
 See [workbench (中文)](docs/local-workbench.zh-CN.md) and [agent assistance (中文)](docs/coding-agent-assistance.zh-CN.md).
 
 ## From task continuity to GitHub maintenance

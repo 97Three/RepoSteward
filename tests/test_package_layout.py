@@ -11,6 +11,7 @@ from unittest.mock import patch
 import reposteward
 from reposteward.core.runtime import installation_info
 from reposteward.plugins import bundle
+from reposteward.web.api.assets import load_assets
 
 
 class PackageLayoutTests(unittest.TestCase):
@@ -39,7 +40,7 @@ class PackageLayoutTests(unittest.TestCase):
         self.assertTrue(
             root.joinpath("data", "plugin-skills", "resume-task", "SKILL.md").is_file()
         )
-        self.assertTrue(root.joinpath("web", "index.html").is_file())
+        self.assertIn("/", load_assets()[0])
 
     def test_plugin_digest_covers_nested_modules_and_ignores_bytecode(self):
         with tempfile.TemporaryDirectory() as temporary:

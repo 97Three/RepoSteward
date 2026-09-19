@@ -24,7 +24,7 @@ Copilot 编码；RepoSteward 在会话之外保存项目事实、决定、验证
 
 ## 快速开始
 
-先体验代码导览，只需要 **Python 3.12+、uv、Git** 和一个已有的本地仓库，
+从源码构建需要 **Python 3.12+、uv、Git、Node 22.12+ 和 npm**，然后可对已有本地仓库体验代码导览，
 无需先配置 GitHub 身份、Docker 或 Agent。
 
 ```bash
@@ -114,7 +114,7 @@ codex plugin list --json
 | Skills | 指导代码阅读、任务接续、验证改动和 PR 跟进 | Codex 插件导出四类技能，名称见下表 |
 | 插件 | 打包绑定工作区的技能和 MCP 连接 | 已有 Codex 本机导出、诊断和安装预览；见[插件指南](docs/agent-plugin.zh-CN.md) |
 | 指令文件 | 向 AGENTS.md、CLAUDE.md 和 Copilot 指令添加经过审阅的片段 | `integration plan/apply/revert`，保留已有指令 |
-| HTTP 工作台 / OpenAPI | 在浏览器查看项目、任务和证据 | 本地只读 HTTP 已实现；FastAPI/React 及其 OpenAPI 契约待 [PR #132](https://github.com/tiammomo/RepoSteward/pull/132) 合入 |
+| HTTP 工作台 / OpenAPI | 在浏览器查看项目、任务和证据 | 已实现 FastAPI、React 和类型化 OpenAPI 契约；见[工作台指南](docs/local-workbench.zh-CN.md) |
 | 持久异步操作 | 用 operation ID 查询进度、请求取消和恢复 | [Issue #165](https://github.com/tiammomo/RepoSteward/issues/165) 待交付；当前 MCP 未实现持久 Tasks |
 | A2A | 向另一个 Agent 端点委派限定范围的项目理解报告 | [Issue #166](https://github.com/tiammomo/RepoSteward/issues/166) 待交付，当前主线未启用 |
 
@@ -188,8 +188,8 @@ reposteward web
 - **每个插件实例绑定一个工作区**：额外项目使用 `reposteward-project-a` 等不同实例名；切换 Codex 目录不会自动切换绑定。
 - **线上事实显式刷新**：`overview refresh` 读取 GitHub 并保存带时间和错误状态的缓存；`overview show` 与当前网页读取本地事实。
 
-当前网页提供跨项目待办、项目导览、任务接续和审阅依据，是本机只读入口。
-FastAPI/React 工作台及通过网页粘贴链接导入项目仍在后续开发范围。
+FastAPI/React 工作台提供跨项目待办、项目导览、任务接续和审阅依据，是本机只读入口。
+安装 wheel 已内置前端资源，日常使用无需 Node；通过网页粘贴链接导入项目仍在后续开发范围。
 详见[本地工作台](docs/local-workbench.zh-CN.md)与[Agent 接续指南](docs/coding-agent-assistance.zh-CN.md)。
 
 ## 从任务接续到 GitHub 维护
