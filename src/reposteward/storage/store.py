@@ -23,6 +23,9 @@ from reposteward.maintenance.feedback import (
     verify_feedback,
 )
 from reposteward.projects.knowledge_ledger import KNOWLEDGE_MIGRATION
+from reposteward.storage.local_queue import decode as decode_local_queue
+from reposteward.storage.local_queue import hex_id
+from reposteward.storage.workbench_ledger import WORKBENCH_MIGRATION
 from reposteward.tasks.ledger import (
     EXTERNAL_TASK_MIGRATION,
     EXTERNAL_VERIFICATION_MIGRATION,
@@ -31,9 +34,10 @@ from reposteward.tasks.lifecycle_store import TASK_RESOLUTION_MIGRATION
 from reposteward.verification.recovery_store import VERIFICATION_RECOVERY_MIGRATION
 from reposteward.web.overview_ledger import OVERVIEW_MIGRATION
 
-SCHEMA_VERSION = 24
+SCHEMA_VERSION = 25
 
 MIGRATIONS: dict[int, tuple[str, ...]] = {
+    25: WORKBENCH_MIGRATION,
     24: VERIFICATION_RECOVERY_MIGRATION,
     23: TASK_RESOLUTION_MIGRATION,
     22: OVERVIEW_MIGRATION,
@@ -654,6 +658,14 @@ def apply_migration(connection: sqlite3.Connection, version: int) -> None:
     if statements is None:
         raise StoreError(f"missing database migration {version}")
     for statement in statements:
+        if version == 25 and statement.startswith("ALTER TABLE queue_tasks ADD COLUMN"):
+            column = statement.split("ADD COLUMN", 1)[1].split()[0]
+            existing = {
+                str(row[1])
+                for row in connection.execute("PRAGMA table_info(queue_tasks)")
+            }
+            if column in existing:
+                continue
         if version == 7 and statement.startswith(
             "ALTER TABLE github_pr_events ADD COLUMN"
         ):
@@ -3395,6 +3407,18 @@ class Store:
         value = dict(row)
         for key in ("work_item_id", "run_id", "depends_on_task_id"):
             value[key] = str(value.get(key) or "")
+        if value.get("operation_family") == "local":
+            try:
+                return decode_local_queue(value)
+            except (ValueError, TypeError, KeyError) as exc:
+                raise StoreError("local queue task identity was modified") from exc
+        if (
+            value.get("operation_family", "native") != "native"
+            or value.get("payload_version", 1) != 1
+            or value.get("scope_kind", "repository") != "repository"
+            or any(value.get(k) for k in ("scope_key", "account_digest", "plan_id"))
+        ):
+            raise StoreError("native queue task envelope was modified")
         action = str(value["action"])
         if action not in QUEUE_ACTIONS or str(value["state"]) not in QUEUE_STATES:
             raise StoreError("queue task contains an unsupported action or state")
@@ -3667,7 +3691,13 @@ class Store:
         states: tuple[str, ...] = (),
         limit: int = 100,
         now: datetime | None = None,
+        operation_family: str = "native",
+        account_digest: str = "",
     ) -> list[dict[str, Any]]:
+        if operation_family not in {"native", "local", "all"}:
+            raise ValueError("unsupported operation family")
+        if account_digest and not hex_id(account_digest, 64):
+            raise ValueError("invalid operation account")
         normalized_repository = repository.casefold()
         unknown_states = set(states) - QUEUE_STATES
         if unknown_states:
@@ -3682,6 +3712,10 @@ class Store:
             normalized_repository,
             task_id,
             task_id,
+            operation_family,
+            operation_family,
+            account_digest,
+            account_digest,
         ]
         if states:
             placeholders = ",".join("?" for _ in states)
@@ -3696,7 +3730,9 @@ class Store:
                 LEFT JOIN queue_tasks dependency
                   ON dependency.id=tasks.depends_on_task_id
                 WHERE (?='' OR tasks.repository=?)
-                  AND (?='' OR tasks.id=?) {state_filter}
+                  AND (?='' OR tasks.id=?)
+                  AND (?='all' OR tasks.operation_family=?)
+                  AND (?='' OR tasks.account_digest=?) {state_filter}
                 ORDER BY tasks.priority DESC, tasks.sequence ASC LIMIT ?
                 """,
                 parameters,
@@ -3743,7 +3779,7 @@ class Store:
                 FROM queue_tasks tasks
                 LEFT JOIN queue_tasks dependency
                   ON dependency.id=tasks.depends_on_task_id
-                WHERE (?='' OR tasks.repository=?)
+                WHERE (?='' OR tasks.repository=?) AND tasks.operation_family='native'
                 GROUP BY tasks.state
                 """,
                 (normalized_repository, normalized_repository),
@@ -3796,7 +3832,15 @@ class Store:
         lease_seconds: int = 900,
         repository: str = "",
         now: datetime | None = None,
+        operation_family: str = "native",
+        account_digest: str = "",
     ) -> list[dict[str, Any]]:
+        if operation_family not in {"native", "local"}:
+            raise ValueError("queue claims require one explicit operation family")
+        if (operation_family == "local" and not hex_id(account_digest, 64)) or (
+            operation_family == "native" and account_digest
+        ):
+            raise ValueError("queue claim account does not match its family")
         normalized_worker = self._queue_worker(worker)
         if not 1 <= limit <= 100:
             raise ValueError("queue claim limit must be between 1 and 100")
@@ -3816,6 +3860,7 @@ class Store:
                 WHERE state='running' AND lease_expires_at<=?
                   AND attempt_count>=max_attempts
                   AND (?='' OR repository=?)
+                  AND operation_family=? AND account_digest=?
                 ORDER BY sequence ASC
                 LIMIT ?
                 """,
@@ -3823,10 +3868,13 @@ class Store:
                     current_text,
                     normalized_repository,
                     normalized_repository,
+                    operation_family,
+                    account_digest,
                     limit,
                 ),
             ).fetchall()
             for row in exhausted:
+                self._queue_task(row)
                 connection.execute(
                     """
                     UPDATE queue_tasks
@@ -3859,6 +3907,7 @@ class Store:
                 WHERE tasks.manual_required=0
                   AND tasks.attempt_count<tasks.max_attempts
                   AND (?='' OR tasks.repository=?)
+                  AND tasks.operation_family=? AND tasks.account_digest=?
                   AND (
                     (tasks.state IN ('pending', 'failed') AND tasks.available_at<=?)
                     OR (tasks.state='running' AND tasks.lease_expires_at<=?)
@@ -3872,12 +3921,19 @@ class Store:
                 (
                     normalized_repository,
                     normalized_repository,
+                    operation_family,
+                    account_digest,
                     current_text,
                     current_text,
                     limit,
                 ),
             ).fetchall()
             for row in rows:
+                validated = self._queue_task(row)
+                if operation_family == "local":
+                    from reposteward.storage.local_queue import plan_for
+
+                    plan_for(connection, validated)
                 generation = int(row["lease_generation"]) + 1
                 event = "taken_over" if row["state"] == "running" else "claimed"
                 cursor = connection.execute(
@@ -4083,7 +4139,15 @@ class Store:
         cancelled_by: str,
         reason_code: str = "operator_cancelled",
         now: datetime | None = None,
+        operation_family: str = "native",
+        account_digest: str = "",
     ) -> dict[str, Any]:
+        if (
+            operation_family not in {"native", "local"}
+            or (operation_family == "local" and not hex_id(account_digest, 64))
+            or (operation_family == "native" and account_digest)
+        ):
+            raise ValueError("invalid operation ownership")
         worker = self._queue_worker(cancelled_by)
         if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", reason_code):
             raise ValueError("queue cancellation reason has an invalid format")
@@ -4095,6 +4159,12 @@ class Store:
             ).fetchone()
             if row is None:
                 raise KeyError(f"queue task not found: {task_id}")
+            if (
+                row["operation_family"] != operation_family
+                or row["account_digest"] != account_digest
+            ):
+                raise KeyError("queue task belongs to another operation scope")
+            self._queue_task(row)
             if str(row["state"]) == "cancelled":
                 return {**self._queue_task(row), "idempotent": True}
             if str(row["state"]) == "completed":
@@ -4136,7 +4206,15 @@ class Store:
         *,
         requeued_by: str,
         now: datetime | None = None,
+        operation_family: str = "native",
+        account_digest: str = "",
     ) -> dict[str, Any]:
+        if (
+            operation_family not in {"native", "local"}
+            or (operation_family == "local" and not hex_id(account_digest, 64))
+            or (operation_family == "native" and account_digest)
+        ):
+            raise ValueError("invalid operation ownership")
         worker = self._queue_worker(requeued_by)
         _current, current_text = self._queue_timestamp(now)
         with self._connection() as connection:
@@ -4146,6 +4224,12 @@ class Store:
             ).fetchone()
             if row is None:
                 raise KeyError(f"queue task not found: {task_id}")
+            if (
+                row["operation_family"] != operation_family
+                or row["account_digest"] != account_digest
+            ):
+                raise KeyError("queue task belongs to another operation scope")
+            self._queue_task(row)
             if str(row["state"]) == "pending" and not bool(row["manual_required"]):
                 return {**self._queue_task(row), "idempotent": True}
             if str(row["state"]) not in {"failed", "cancelled"}:

@@ -186,9 +186,9 @@ reposteward web
 - **仓库与工作区分开管理**：相同 remote 的多个 worktree 属于同一项目，各自保留工作区绑定。
 - **关联不等于授权**：参与维护或贡献时，还需为对应仓库配置角色与策略。
 - **每个插件实例绑定一个工作区**：额外项目使用 `reposteward-project-a` 等不同实例名；切换 Codex 目录不会自动切换绑定。
-- **线上事实显式刷新**：`overview refresh` 读取 GitHub 并保存带时间和错误状态的缓存；`overview show` 与当前网页读取本地事实。
+- **线上事实显式刷新**：`overview refresh` 读取 GitHub 并保存带时间和错误状态的缓存；`overview show` 与网页查询读取本地事实；网页同步按钮显式创建持久本地操作，区分开放、已合并和已关闭 PR，并保留来源时间。
 
-FastAPI/React 工作台提供跨项目待办、项目导览、任务接续和审阅依据，是本机只读入口。
+FastAPI/React 工作台提供跨项目待办、项目导览、任务接续和审阅依据，支持本地查询和显式 GitHub 同步。
 安装 wheel 已内置前端资源，日常使用无需 Node；通过网页粘贴链接导入项目仍在后续开发范围。
 详见[本地工作台](docs/local-workbench.zh-CN.md)与[Agent 接续指南](docs/coding-agent-assistance.zh-CN.md)。
 
@@ -238,7 +238,7 @@ Agent 报告的“完成”和“测试通过”会与独立验证证据分开�
 | Codex 插件 | 四类技能、六类 MCP 工具，固定工作区与账号范围 |
 | Codex CLI / 可选 Codex SDK | 可作为 RepoSteward 调用的 Coding Harness |
 | Claude Code / Copilot（VS Code） | CLI/文件接续与 MCP 配置预览；原生插件打包、托管 Runner 及实机验证范围另行推进 |
-| 本地工作台 | 只读浏览本机项目和任务；不提供公网多用户服务 |
+| 本地工作台 | 本地项目与任务查询、显式 GitHub 同步；不提供公网多用户服务 |
 
 [客户端试点记录](docs/handoff-pilot-2026-09-05.zh-CN.md)说明具体版本和当次验证范围。
 长期方向是在维护者规则下逐步增加仓库自动化：先有证据充分的建议，再扩大可执行动作。

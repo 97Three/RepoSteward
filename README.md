@@ -202,9 +202,9 @@ reposteward web
 - **Repository identity and workspace binding are separate.** Worktrees sharing a remote belong to one project, with distinct workspace bindings.
 - **Linking is not maintenance authority.** Configure the corresponding repository role and policy for maintenance or contributions.
 - **Each plugin instance binds one workspace.** Use distinct names such as `reposteward-project-a` for additional projects; changing Codex's directory does not switch the binding.
-- **Refresh GitHub facts explicitly.** `overview refresh` fetches and caches facts with timestamps and error states. `overview show` and the current web view read local records.
+- **Refresh GitHub facts explicitly.** `overview refresh` fetches and caches facts with timestamps and error states. `overview show` and web queries read local records; the web sync action explicitly creates a durable local operation. Open, merged and closed PRs retain their source timestamps and observed state.
 
-The FastAPI/React workbench provides local, read-only views of cross-project work, code guides,
+The FastAPI/React workbench provides local views and explicit GitHub synchronization of cross-project work, code guides,
 task continuity and review evidence. Installed wheels bundle the frontend and do not require Node.
 Importing projects by pasting a URL into the web interface remains follow-up work.
 See [workbench (中文)](docs/local-workbench.zh-CN.md) and [agent assistance (中文)](docs/coding-agent-assistance.zh-CN.md).
@@ -261,7 +261,7 @@ There is no established token-savings percentage to promise.
 | Codex plugin | Four skills and six MCP tools, scoped to a workspace and account |
 | Codex CLI / optional Codex SDK | Built-in coding harnesses invoked by RepoSteward |
 | Claude Code / Copilot (VS Code) | CLI/file handoff and MCP configuration previews; native plugin packaging, managed runners and further client validation remain separate work |
-| Local workbench | Read-only access to local projects and tasks; no public multi-user deployment |
+| Local workbench | Local project/task views and explicit GitHub sync; no public multi-user deployment |
 
 The [client pilot record (中文)](docs/handoff-pilot-2026-09-05.zh-CN.md) specifies the versions
 and scope of that trial. The long-term direction is more repository automation under
