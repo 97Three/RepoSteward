@@ -620,6 +620,11 @@ export interface components {
             can_cancel: boolean;
             /** Can Retry */
             can_retry: boolean;
+            /**
+             * Cancel Requested
+             * @default false
+             */
+            cancel_requested: boolean;
             /** Created At */
             created_at: string;
             /** Id */
@@ -643,6 +648,11 @@ export interface components {
             stages: {
                 [key: string]: components["schemas"]["JsonValue"];
             }[];
+            /**
+             * Stages Omitted
+             * @default 0
+             */
+            stages_omitted: number;
             /**
              * State
              * @enum {string}

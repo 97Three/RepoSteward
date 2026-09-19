@@ -110,12 +110,12 @@ codex plugin list --json
 | 入口 | 用来做什么 | 当前交付状态 |
 | --- | --- | --- |
 | CLI / JSON | 人工操作和脚本自动化；`--json-envelope` 选择版本化响应 | 已实现；详见[机器接口契约](docs/machine-interfaces.zh-CN.md) |
-| MCP | 让已有 Agent 通过本地 STDIO 调用一个关联工作区的工具 | 已实现六类工具，需要可选 `mcp` 依赖 |
+| MCP | 让已有 Agent 通过本地 STDIO 调用一个关联工作区的工具 | 已实现七类工具，需要可选 `mcp` 依赖 |
 | Skills | 指导代码阅读、任务接续、验证改动和 PR 跟进 | Codex 插件导出四类技能，名称见下表 |
 | 插件 | 打包绑定工作区的技能和 MCP 连接 | 已有 Codex 本机导出、诊断和安装预览；见[插件指南](docs/agent-plugin.zh-CN.md) |
 | 指令文件 | 向 AGENTS.md、CLAUDE.md 和 Copilot 指令添加经过审阅的片段 | `integration plan/apply/revert`，保留已有指令 |
 | HTTP 工作台 / OpenAPI | 在浏览器查看项目、任务和证据 | 已实现 FastAPI、React 和类型化 OpenAPI 契约；见[工作台指南](docs/local-workbench.zh-CN.md) |
-| 持久异步操作 | 用 operation ID 查询进度、请求取消和恢复 | [Issue #165](https://github.com/tiammomo/RepoSteward/issues/165) 待交付；当前 MCP 未实现持久 Tasks |
+| 持久异步操作 | 用 operation ID 查询进度、请求取消和恢复 | 已通过 CLI 与普通 MCP `operation` 工具实现；见[异步操作指南](docs/assistance-operations.zh-CN.md)。标准 MCP Tasks 尚不支持 |
 | A2A | 向另一个 Agent 端点委派限定范围的项目理解报告 | [Issue #166](https://github.com/tiammomo/RepoSteward/issues/166) 待交付，当前主线未启用 |
 
 ### 直接接入 MCP
@@ -133,7 +133,7 @@ reposteward mcp config . --client copilot-vscode
 客户端以 STDIO 启动 `reposteward mcp serve PATH`，服务限定在该工作区内。
 详细步骤见[Agent 接续指南](docs/coding-agent-assistance.zh-CN.md#文件与-mcp-接入)。
 
-六类工具为 `project`、`understanding`、`context`、`evidence`、`checkpoint`、`verification`，
+七类工具为 `project`、`understanding`、`context`、`evidence`、`checkpoint`、`verification`、`operation`，
 用于读取项目和任务事实、保存进展、执行可信验证 profile。MCP 不提供 GitHub 发布和合并工具。
 修改用户策略或验证 profile 后需要重启服务；保存检查点不代表测试已经通过。
 
@@ -167,7 +167,8 @@ reposteward --json-envelope capabilities
 reposteward doctor --local
 ```
 
-当前主线报告 `a2a.implemented=false`、`mcp.durable_async_tasks=false`。
+当前主线报告 `a2a.implemented=false`、`mcp.durable_operations=true`、`mcp.durable_async_tasks=false`。
+持久操作使用显式 worker 和持久 ID，与标准 MCP Tasks 扩展分别管理。
 源码合入、安装包升级、客户端实际连接成功是三个不同阶段。
 各协议的版本依据、实现边界和交付跟进见[协议与兼容性索引](docs/protocol-map.zh-CN.md)。
 
@@ -235,7 +236,7 @@ Agent 报告的“完成”和“测试通过”会与独立验证证据分开�
 
 | 接入形式 | 当前支持 |
 | --- | --- |
-| Codex 插件 | 四类技能、六类 MCP 工具，固定工作区与账号范围 |
+| Codex 插件 | 四类技能、七类 MCP 工具，固定工作区与账号范围 |
 | Codex CLI / 可选 Codex SDK | 可作为 RepoSteward 调用的 Coding Harness |
 | Claude Code / Copilot（VS Code） | CLI/文件接续与 MCP 配置预览；原生插件打包、托管 Runner 及实机验证范围另行推进 |
 | 本地工作台 | 本地项目与任务查询、显式 GitHub 同步；不提供公网多用户服务 |

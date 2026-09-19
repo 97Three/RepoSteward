@@ -11,8 +11,10 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from reposteward.storage.store import Store
 
+ASSISTANCE_ACTIONS = frozenset({"assistance.verification", "assistance.understanding"})
 LOCAL_SCOPES = {
     "github.sync": "project",
+    **{action: "project" for action in ASSISTANCE_ACTIONS},
     "workspace.scan": "project",
     "project.inspect": "import",
     "project.apply": "import",

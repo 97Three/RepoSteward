@@ -27,16 +27,16 @@ CLI、MCP 和插件固定的解释器可能不同，检查时须使用实际启�
 | 入口 | 当前源码状态 | 负责什么 | 代码与契约入口 |
 | --- | --- | --- | --- |
 | CLI | 已实现 | 参数解析、同步结果及显式维护命令；公开写入使用独立门禁 | [cli.py](../src/reposteward/cli.py)、[机器接口](machine-interfaces.zh-CN.md) |
-| MCP | 已实现本地 STDIO | 绑定一个工作区，为 Agent 提供项目、上下文、证据、理解、检查点和验证六类工具 | [integrations/mcp.py](../src/reposteward/integrations/mcp.py)、[core/api_contract.py](../src/reposteward/core/api_contract.py) |
+| MCP | 已实现本地 STDIO | 绑定一个工作区，为 Agent 提供项目、上下文、证据、理解、检查点和验证七类工具（包括普通 `operation` 工具） | [integrations/mcp.py](../src/reposteward/integrations/mcp.py)、[core/api_contract.py](../src/reposteward/core/api_contract.py) |
 | 工作台 HTTP | 已实现本地查询与显式同步 | 同源会话、项目阅读、任务和维护信息；显式同步操作保留开放及终态 PR 事实；由 FastAPI 提供 HTTP 服务 | [web/server.py](../src/reposteward/web/server.py)、[web/workbench.py](../src/reposteward/web/workbench.py) |
 | FastAPI / React / OpenAPI | 已实现 | 工作台服务与前端的类型契约和构建分发 | [web/api](../src/reposteward/web/api)、[frontend](../frontend)、[工作台指南](local-workbench.zh-CN.md) |
-| 持久异步操作 | 待交付 | 持久 operation ID、进度、取消请求和恢复，由 CLI/MCP 复用应用服务 | [Issue #165](https://github.com/tiammomo/RepoSteward/issues/165)；不是已实现 MCP Tasks 的声明 |
+| 持久异步操作 | 已实现 | 持久 operation ID、进度、取消请求和恢复，由 CLI/MCP 复用应用服务 | [异步操作指南](assistance-operations.zh-CN.md)；`mcp.durable_operations=true`，标准 MCP Tasks 尚不支持 |
 | A2A | 本主线未实现 | 待交付实现面向限定工作区的项目理解报告委派 | [Issue #166](https://github.com/tiammomo/RepoSteward/issues/166)；检查当前安装的 `a2a.implemented` |
 
 主线 MCP 不提供 GitHub 发布或合并工具；保存 Agent 检查点也不等于验证通过。
 验证只能选择可信用户配置中已有的 profile，不能通过传输参数注入任意命令。
 MCP 协议由 SDK 协商，其版本与 RepoSteward 的 JSON envelope、Context Pack、数据库版本独立。
-当前 `mcp.durable_async_tasks=false`；普通工具中的异步业务操作也不能自动被称作 MCP Tasks。
+当前 `mcp.durable_async_tasks=false`；普通 `operation` 工具已提供持久业务操作，但不属于标准 MCP Tasks。
 
 A2A 报告委派、开发任务、验证 attempt 和 GitHub PR 是不同对象。报告生成完成，
 不代表代码修改、测试或 PR 已交付；新增传输必须继续复用既有权限和证据边界。

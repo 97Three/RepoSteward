@@ -18,7 +18,13 @@ from reposteward.github.client import GitHubClient, GitHubReadError
 from reposteward.github.sync import GitHubSync, account_key, observations
 from reposteward.projects.imports import ProjectImports, import_problem
 from reposteward.projects.scans import WorkspaceScans
-from reposteward.storage.local_queue import digest, enqueue, hex_id, plan_for
+from reposteward.storage.local_queue import (
+    ASSISTANCE_ACTIONS,
+    digest,
+    enqueue,
+    hex_id,
+    plan_for,
+)
 from reposteward.storage.store import SCHEMA_VERSION, Store, StoreError, utc_now
 from reposteward.web.workbench import Workbench
 
@@ -147,6 +153,13 @@ class LocalOperations:
         task = self._task(store, task_id)
         attempts = store.queue_attempts(task_id, limit=50) if history else []
         with store._connection() as db:
+            cancel_requested = (
+                db.execute(
+                    "SELECT 1 FROM local_operation_requests WHERE account_digest=? AND action=? AND task_id=? LIMIT 1",
+                    (self.account, "cancel:" + task_id, task_id),
+                ).fetchone()
+                is not None
+            )
             payload = plan_for(db, task)["payload"]
             rows = (
                 db.execute(
@@ -169,6 +182,11 @@ class LocalOperations:
                     "result": body,
                 }
             )
+        stages_omitted = (
+            max(0, len(stages) - 1) if task["action"] in ASSISTANCE_ACTIONS else 0
+        )
+        if stages_omitted:
+            stages = stages[-1:]
         if history and task["scope_kind"] == "import":
             with store._connection() as db:
                 import_steps = db.execute(
@@ -211,11 +229,18 @@ class LocalOperations:
             if task["action"] == "workspace.scan"
             else "",
             "revision": revision(task),
-            "can_cancel": task["state"] == "pending",
-            "can_retry": task["state"] in {"failed", "cancelled"},
+            "can_cancel": not cancel_requested
+            and (
+                task["state"] == "pending"
+                or (task["action"] in ASSISTANCE_ACTIONS and task["state"] == "running")
+            ),
+            "cancel_requested": cancel_requested,
+            "can_retry": task["action"] == "github.sync"
+            and task["state"] in {"failed", "cancelled"},
             "lease_expired": task["lease_expired"],
             "attempts": attempts,
             "stages": stages,
+            "stages_omitted": stages_omitted,
             "public_write": False,
         }
 
@@ -280,17 +305,31 @@ class LocalOperations:
                         "revision_changed", "操作状态已变化，请刷新后重试。"
                     )
                 if action == "cancel":
-                    if task["state"] != "pending":
+                    if (
+                        task["state"] == "running"
+                        and task["action"] in ASSISTANCE_ACTIONS
+                    ):
+                        db.execute(
+                            "UPDATE queue_tasks SET updated_at=? WHERE id=?",
+                            (utc_now(), task_id),
+                        )
+                    elif task["state"] != "pending":
                         raise OperationError(
                             "not_cancellable", "只有尚未开始的操作可以取消。"
                         )
-                    store.cancel_queue_task(
-                        task_id,
-                        cancelled_by=self.config.github.login,
-                        operation_family="local",
-                        account_digest=self.account,
-                    )
+                    else:
+                        store.cancel_queue_task(
+                            task_id,
+                            cancelled_by=self.config.github.login,
+                            operation_family="local",
+                            account_digest=self.account,
+                        )
                 else:
+                    if task["action"] in ASSISTANCE_ACTIONS:
+                        raise OperationError(
+                            "reconciliation_required",
+                            "请先核对原始验证依据，再通过作用域内的 operation reconcile 接续记录。",
+                        )
                     if task["state"] not in {"failed", "cancelled"}:
                         raise OperationError("not_retryable", "当前操作尚不需要重试。")
                     store.requeue_queue_task(

@@ -11,6 +11,7 @@ import {
   arr,
   Badge,
   Command,
+  Detail,
   Empty,
   Notice,
   obj,
@@ -19,6 +20,7 @@ import {
   str,
   when,
 } from "../components";
+
 
 function sourceName(raw: unknown): string {
   const name = str(raw);
@@ -314,6 +316,8 @@ function actionName(action: string) {
         "project.inspect": "识别项目",
         "project.apply": "导入项目",
         "workspace.scan": "扫描工作区",
+        "assistance.verification": "验证操作",
+        "assistance.understanding": "项目理解报告",
       } as Record<string, string>
     )[action] || action
   );
@@ -368,6 +372,8 @@ function OperationDetail({ id }: { id: string }) {
           <p>
             登记于 {when(data.created_at)} · 更新于 {when(data.updated_at)}
           </p>
+          {data.action.startsWith("assistance.") && <Notice>此操作完成仅表示报告或验证结束，开发任务的交付状态仍需单独核对。</Notice>}
+          {data.cancel_requested && data.state === "running" && <Notice>已请求取消，正在等待执行器确认停止。</Notice>}
           {data.last_error_code && (
             <Notice>
               操作结果：{errorText(data.last_error_code)}
@@ -386,7 +392,7 @@ function OperationDetail({ id }: { id: string }) {
                 }
                 onClick={() => mutation.mutate("cancel")}
               >
-                取消排队
+                {data.state === "running" ? "请求取消" : "取消排队"}
               </button>
             )}
             {data.can_retry && (
@@ -409,7 +415,7 @@ function OperationDetail({ id }: { id: string }) {
               return (
                 <li key={i}>
                   {sourceName(stage.stage)} ·{" "}
-                  <Badge value={str(result.status)} /> ·{" "}
+                  <Badge value={str(result.outcome || result.status)} /> ·{" "}
                   {when(stage.created_at)}
                   {Boolean(result.error_code) &&
                     ` · ${errorText(result.error_code)}`}
@@ -419,6 +425,7 @@ function OperationDetail({ id }: { id: string }) {
                       查看已登记项目
                     </Link>
                   )}
+                  {stage.stage === "result" && <Detail title="结果与来源依据" value={result} />}
                   {stage.stage === "summary" &&
                     data.action === "workspace.scan" && (
                       <span>
@@ -441,6 +448,7 @@ function OperationDetail({ id }: { id: string }) {
               );
             })}
           </ol>
+          {!!data.stages_omitted && <Notice>仅展示最近结果；另有 {data.stages_omitted} 条历史结果保留在本地审计中。</Notice>}
           {!data.stages.length && <p>操作已持久保存，等待工作进程执行。</p>}
           <details>
             <summary>排队、领取与恢复历史</summary>
@@ -473,7 +481,7 @@ export function OperationsPage() {
     <>
       <header className="page-heading">
         <h1>本地操作</h1>
-        <p>显式发起的同步、导入与扫描记录，刷新页面后可以继续查看。</p>
+        <p>显式发起的同步、导入、扫描、验证与报告记录，刷新页面后可以继续查看。</p>
       </header>
       <ReadState query={query} />
       <div className="github-items">

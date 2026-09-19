@@ -121,12 +121,12 @@ They share RepoSteward's task and evidence services, with different scopes.
 | Entry point | What it provides | Current delivery status |
 | --- | --- | --- |
 | CLI / JSON | Human commands and automation; `--json-envelope` selects versioned responses | Implemented; [machine interface contract](docs/machine-interfaces.zh-CN.md) |
-| MCP | An existing agent calls tools for one linked workspace over local STDIO | Implemented; six tools, optional `mcp` dependency |
+| MCP | An existing agent calls tools for one linked workspace over local STDIO | Implemented; seven tools, optional `mcp` dependency |
 | Skills | Guidance for reading code, resuming tasks, verifying changes and following PRs | Four skills exported in the Codex plugin; names below |
 | Plugin | Workspace-bound skills plus an MCP connection | Local Codex export, diagnostics and installation preview; [plugin guide](docs/agent-plugin.zh-CN.md) |
 | Instruction files | Reviewed additions to AGENTS.md, CLAUDE.md and Copilot instructions | `integration plan/apply/revert`; preserves existing instructions |
 | HTTP workbench / OpenAPI | Browser views of projects, tasks and evidence | Implemented with FastAPI, React and a typed OpenAPI contract; [workbench guide](docs/local-workbench.zh-CN.md) |
-| Durable asynchronous operations | Operation IDs, progress, cancellation requests and recovery | Pending delivery in [Issue #165](https://github.com/tiammomo/RepoSteward/issues/165); current MCP does not implement durable Tasks |
+| Durable asynchronous operations | Operation IDs, progress, cancellation requests and recovery | Implemented through CLI and the ordinary MCP `operation` tool; [operation guide](docs/assistance-operations.zh-CN.md). Standard MCP Tasks remain unsupported |
 | A2A | Delegate scoped project-understanding reports to another agent endpoint | Pending delivery in [Issue #166](https://github.com/tiammomo/RepoSteward/issues/166); not enabled in the current mainline |
 
 ### Connect MCP directly
@@ -146,8 +146,8 @@ Apply the chosen preview through the client's configuration workflow. It starts
 `reposteward mcp serve PATH` over STDIO, scoped to that workspace. For details, see
 [agent assistance](docs/coding-agent-assistance.zh-CN.md#文件与-mcp-接入).
 
-The six tools are `project`, `understanding`, `context`, `evidence`, `checkpoint` and
-`verification`. They read project/task facts, save progress and run trusted verification
+The seven tools are `project`, `understanding`, `context`, `evidence`, `checkpoint`,
+`verification` and `operation`. They read project/task facts, save progress and run trusted verification
 profiles. MCP exposes no GitHub publication or merge tools. Restart the server after
 changing user policy or verification profiles; a saved checkpoint is not proof that tests passed.
 
@@ -182,7 +182,7 @@ reposteward --json-envelope capabilities
 reposteward doctor --local
 ```
 
-The current mainline reports `a2a.implemented=false` and `mcp.durable_async_tasks=false`.
+The current mainline reports `a2a.implemented=false`, `mcp.durable_operations=true` and `mcp.durable_async_tasks=false`. Durable operations use explicit workers and persistent IDs; they are separate from the standard MCP Tasks extension.
 Source merged, package installed and client successfully connected are separate milestones.
 See the [protocol and compatibility map](docs/protocol-map.zh-CN.md) for version authorities,
 implementation boundaries and delivery follow-up.
@@ -258,7 +258,7 @@ There is no established token-savings percentage to promise.
 
 | Integration | Current support |
 | --- | --- |
-| Codex plugin | Four skills and six MCP tools, scoped to a workspace and account |
+| Codex plugin | Four skills and seven MCP tools, scoped to a workspace and account |
 | Codex CLI / optional Codex SDK | Built-in coding harnesses invoked by RepoSteward |
 | Claude Code / Copilot (VS Code) | CLI/file handoff and MCP configuration previews; native plugin packaging, managed runners and further client validation remain separate work |
 | Local workbench | Local project/task views and explicit GitHub sync; no public multi-user deployment |
