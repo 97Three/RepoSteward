@@ -116,7 +116,7 @@ codex plugin list --json
 | 指令文件 | 向 AGENTS.md、CLAUDE.md 和 Copilot 指令添加经过审阅的片段 | `integration plan/apply/revert`，保留已有指令 |
 | HTTP 工作台 / OpenAPI | 在浏览器查看项目、任务和证据 | 已实现 FastAPI、React 和类型化 OpenAPI 契约；见[工作台指南](docs/local-workbench.zh-CN.md) |
 | 持久异步操作 | 用 operation ID 查询进度、请求取消和恢复 | 已通过 CLI 与普通 MCP `operation` 工具实现；见[异步操作指南](docs/assistance-operations.zh-CN.md)。标准 MCP Tasks 尚不支持 |
-| A2A | 向另一个 Agent 端点委派限定范围的项目理解报告 | [Issue #166](https://github.com/tiammomo/RepoSteward/issues/166) 待交付，当前主线未启用 |
+| A2A | 向另一个 Agent 端点委派限定范围的项目理解报告 | 已实现本地 A2A 1.0 HTTP+JSON 报告服务，需要可选 `a2a` 依赖；见[A2A 指南](docs/a2a.zh-CN.md) |
 
 ### 直接接入 MCP
 
@@ -153,8 +153,9 @@ reposteward mcp config . --client copilot-vscode
 
 ### A2A 与跨客户端接续
 
-计划中的 A2A 服务委派的是**项目理解报告**。报告完成不表示代码已修改、验证或发布。
-该能力交付前，跨客户端继续工作使用 CLI/MCP 配合 Context Pack 和 Checkpoint。
+A2A 服务为一个关联工作区委派**项目理解报告**，需要 `a2a` extra 和独立本地 Bearer 令牌，
+固定监听本机并复用持久报告操作；目前不提供流式输出或推送通知。
+报告完成不表示代码已修改、验证或发布；跨客户端继续开发使用 CLI/MCP 配合 Context Pack 和 Checkpoint。
 Context Pack/Bundle 当前写出 v3，Checkpoint 写出 v1；这些持久文档版本与 MCP 协商版本、
 A2A 协议版本分别管理。
 
@@ -167,7 +168,7 @@ reposteward --json-envelope capabilities
 reposteward doctor --local
 ```
 
-当前主线报告 `a2a.implemented=false`、`mcp.durable_operations=true`、`mcp.durable_async_tasks=false`。
+当前主线报告 `a2a.implemented=true`、`mcp.durable_operations=true`、`mcp.durable_async_tasks=false`。
 持久操作使用显式 worker 和持久 ID，与标准 MCP Tasks 扩展分别管理。
 源码合入、安装包升级、客户端实际连接成功是三个不同阶段。
 各协议的版本依据、实现边界和交付跟进见[协议与兼容性索引](docs/protocol-map.zh-CN.md)。

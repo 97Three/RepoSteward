@@ -31,7 +31,7 @@ CLI、MCP 和插件固定的解释器可能不同，检查时须使用实际启�
 | 工作台 HTTP | 已实现本地查询与显式同步 | 同源会话、项目阅读、任务和维护信息；显式同步操作保留开放及终态 PR 事实；由 FastAPI 提供 HTTP 服务 | [web/server.py](../src/reposteward/web/server.py)、[web/workbench.py](../src/reposteward/web/workbench.py) |
 | FastAPI / React / OpenAPI | 已实现 | 工作台服务与前端的类型契约和构建分发 | [web/api](../src/reposteward/web/api)、[frontend](../frontend)、[工作台指南](local-workbench.zh-CN.md) |
 | 持久异步操作 | 已实现 | 持久 operation ID、进度、取消请求和恢复，由 CLI/MCP 复用应用服务 | [异步操作指南](assistance-operations.zh-CN.md)；`mcp.durable_operations=true`，标准 MCP Tasks 尚不支持 |
-| A2A | 本主线未实现 | 待交付实现面向限定工作区的项目理解报告委派 | [Issue #166](https://github.com/tiammomo/RepoSteward/issues/166)；检查当前安装的 `a2a.implemented` |
+| A2A | 已实现本机 A2A 1.0 HTTP+JSON | 限定工作区的项目理解报告委派 | [A2A 指南](a2a.zh-CN.md)、[实现](../src/reposteward/integrations/a2a)；检查当前安装的 `a2a.implemented` |
 
 主线 MCP 不提供 GitHub 发布或合并工具；保存 Agent 检查点也不等于验证通过。
 验证只能选择可信用户配置中已有的 profile，不能通过传输参数注入任意命令。
@@ -84,8 +84,8 @@ Checkpoint 的 `evidence` 上限仍为 128。原生 ready/failed 检查点超限
 
 ## 接下来如何收敛
 
-工作台前置能力已交付，继续逐项发布 GitHub 同步、项目导入、扫描、持久操作与 A2A，
-每项使用自己的 Issue、差异审阅和实际发布 HEAD 验证。合入时补齐本页对应的状态、
+工作台、GitHub 同步、项目导入、扫描、持久操作与 A2A 已分别交付。
+后续扩展继续使用自己的 Issue、差异审阅和实际发布 HEAD 验证。合入时补齐本页对应的状态、
 源码位置和契约，不将组合验收分支当作一个发布单元。
 新增入口的薄适配层应把身份、输入和传输结果交给共享应用服务；业务规则、验证证据和
 公开写入审计仍只有一套。源码分包后的进一步解耦边界见[源码指南](source-layout.zh-CN.md)。

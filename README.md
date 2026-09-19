@@ -127,7 +127,7 @@ They share RepoSteward's task and evidence services, with different scopes.
 | Instruction files | Reviewed additions to AGENTS.md, CLAUDE.md and Copilot instructions | `integration plan/apply/revert`; preserves existing instructions |
 | HTTP workbench / OpenAPI | Browser views of projects, tasks and evidence | Implemented with FastAPI, React and a typed OpenAPI contract; [workbench guide](docs/local-workbench.zh-CN.md) |
 | Durable asynchronous operations | Operation IDs, progress, cancellation requests and recovery | Implemented through CLI and the ordinary MCP `operation` tool; [operation guide](docs/assistance-operations.zh-CN.md). Standard MCP Tasks remain unsupported |
-| A2A | Delegate scoped project-understanding reports to another agent endpoint | Pending delivery in [Issue #166](https://github.com/tiammomo/RepoSteward/issues/166); not enabled in the current mainline |
+| A2A | Delegate scoped project-understanding reports to another agent endpoint | Implemented as a local A2A 1.0 HTTP+JSON report service; optional `a2a` dependency; [A2A guide](docs/a2a.zh-CN.md) |
 
 ### Connect MCP directly
 
@@ -167,10 +167,11 @@ The repository's `.agents/skills/` contains separate contributor/maintainer guid
 
 ### A2A and cross-client handoff
 
-The planned A2A service delegates a **project-understanding report**, not an entire
-Issue-to-PR workflow. Completing a report does not mean code was changed, verified or published.
-Until that capability is delivered, use CLI/MCP with Context Packs and Checkpoints to continue
-work across clients. Context Pack/Bundle currently write v3 and Checkpoint writes v1; these
+The A2A service delegates a **project-understanding report** in one linked workspace.
+It requires the `a2a` extra and a separate local bearer token; it listens on loopback and reuses
+durable report operations. Streaming and push notifications are not supported.
+Completing a report does not mean code was changed, verified or published. CLI/MCP with
+Context Packs and Checkpoints remain the path for continuing development work across clients. Context Pack/Bundle currently write v3 and Checkpoint writes v1; these
 persisted document versions are independent of MCP negotiation and A2A protocol versions.
 
 Check the executable you actually use before configuring an integration:
@@ -182,7 +183,7 @@ reposteward --json-envelope capabilities
 reposteward doctor --local
 ```
 
-The current mainline reports `a2a.implemented=false`, `mcp.durable_operations=true` and `mcp.durable_async_tasks=false`. Durable operations use explicit workers and persistent IDs; they are separate from the standard MCP Tasks extension.
+The current mainline reports `a2a.implemented=true`, `mcp.durable_operations=true` and `mcp.durable_async_tasks=false`. Durable operations use explicit workers and persistent IDs; they are separate from the standard MCP Tasks extension.
 Source merged, package installed and client successfully connected are separate milestones.
 See the [protocol and compatibility map](docs/protocol-map.zh-CN.md) for version authorities,
 implementation boundaries and delivery follow-up.
