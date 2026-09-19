@@ -54,7 +54,7 @@ A2A 报告委派、开发任务、验证 attempt 和 GitHub PR 是不同对象�
 | Checkpoint | 1 | 开发状态与证据引用；不把 Agent 声明提升为已验证事实 |
 | Task Contract | 1 | Context Pack v3 内的任务契约，绑定精确 Issue 来源或该版本的显式审阅 |
 | 任务台账 SQLite | 24 | [storage/store.py](../src/reposteward/storage/store.py) 定义目标；本机实际版本可能更旧，升级单独规划 |
-| 项目注册表 SQLite | 1 | [projects/registry.py](../src/reposteward/projects/registry.py) 定义；与任务台账分开管理 |
+| 项目注册表 SQLite | 2 | [projects/registry.py](../src/reposteward/projects/registry.py) 定义；与任务台账分开管理 |
 | 插件导出收据 | 2 | [plugins/bundle.py](../src/reposteward/plugins/bundle.py) 写出的 `export.json`；不同于包版本、客户端 manifest 和 MCP 协议版本 |
 
 JSON 文档使用随包发布的 [schemas](../src/reposteward/schemas)，持久化和导入入口校验未知字段、

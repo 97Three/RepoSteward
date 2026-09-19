@@ -189,7 +189,7 @@ reposteward web
 - **线上事实显式刷新**：`overview refresh` 读取 GitHub 并保存带时间和错误状态的缓存；`overview show` 与网页查询读取本地事实；网页同步按钮显式创建持久本地操作，区分开放、已合并和已关闭 PR，并保留来源时间。
 
 FastAPI/React 工作台提供跨项目待办、项目导览、任务接续和审阅依据，支持本地查询和显式 GitHub 同步。
-安装 wheel 已内置前端资源，日常使用无需 Node；通过网页粘贴链接导入项目仍在后续开发范围。
+安装 wheel 已内置前端资源，日常使用无需 Node；在项目页粘贴 GitHub URL 或本地路径，审阅计划后可关联已有目录、克隆到新目录或仅关注远程项目；导入不覆盖已有代码，也不授予维护权限。
 详见[本地工作台](docs/local-workbench.zh-CN.md)与[Agent 接续指南](docs/coding-agent-assistance.zh-CN.md)。
 
 ## 从任务接续到 GitHub 维护

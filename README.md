@@ -206,7 +206,7 @@ reposteward web
 
 The FastAPI/React workbench provides local views and explicit GitHub synchronization of cross-project work, code guides,
 task continuity and review evidence. Installed wheels bundle the frontend and do not require Node.
-Importing projects by pasting a URL into the web interface remains follow-up work.
+In the Projects page, paste a GitHub URL or local path, review the plan, then link an existing directory, clone into a new directory, or follow the remote project only. Importing does not overwrite existing code or grant maintenance permissions.
 See [workbench (中文)](docs/local-workbench.zh-CN.md) and [agent assistance (中文)](docs/coding-agent-assistance.zh-CN.md).
 
 ## From task continuity to GitHub maintenance
