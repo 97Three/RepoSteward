@@ -39,7 +39,7 @@ uv run reposteward understand query /absolute/path/to/project "symbol_or_path"
 
 将路径替换为你的 clone/worktree。`scan` 写入仓库外的理解缓存；`guide` 返回项目入口、
 建议阅读顺序与代码来源，`query` 按符号、路径或关键词缩小阅读范围。
-修改代码后重新扫描，旧导览不会被当成当前事实。
+工作台也可预览并扫描选定工作区，保存进度并展示代码依据的新鲜度。修改代码后重新扫描，旧导览不会被当成当前事实。
 
 目前以 Python 静态结构、项目清单和文档读取为主，不代表已理解所有语言或运行时行为。
 详见[项目理解指南](docs/project-understanding.zh-CN.md)。

@@ -41,7 +41,7 @@ uv run reposteward understand query /absolute/path/to/project "symbol_or_path"
 
 Replace the path with your clone/worktree. `scan` writes an understanding cache outside
 the repository; `guide` returns entry points, a suggested reading route and source evidence.
-`query` narrows the route using symbols, paths or keywords. Rescan after edits: stale guides
+`query` narrows the route using symbols, paths or keywords. The workbench can also plan and scan the selected workspace, with persistent progress and source freshness. Rescan after edits: stale guides
 are not presented as current facts.
 
 Coverage currently centers on Python static structure, project manifests and documentation;
